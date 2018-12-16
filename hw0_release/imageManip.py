@@ -20,7 +20,7 @@ def load(image_path):
 
     ### YOUR CODE HERE
     # Use skimage io.imread
-    pass
+    out = io.imread(image_path)
     ### END YOUR CODE
 
     # Let's convert the image to be between the correct range.
@@ -45,7 +45,7 @@ def dim_image(image):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out = 0.5 * image ** 2
     ### END YOUR CODE
 
     return out
@@ -66,7 +66,7 @@ def convert_to_grey_scale(image):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out = color.rgb2gray(image)
     ### END YOUR CODE
 
     return out
@@ -86,7 +86,8 @@ def rgb_exclusion(image, channel):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out = image.copy()
+    out[:, :, {"R": 0, "G": 1, "B": 2}[channel]] = 0
     ### END YOUR CODE
 
     return out
@@ -107,7 +108,7 @@ def lab_decomposition(image, channel):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out = lab[:, :, {"L": 0, "A": 1, "B": 2}[channel]].copy()
     ### END YOUR CODE
 
     return out
@@ -128,7 +129,7 @@ def hsv_decomposition(image, channel='H'):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out = hsv[:, :, {"H": 0, "S": 1, "V": 2}[channel]].copy()
     ### END YOUR CODE
 
     return out
@@ -154,7 +155,10 @@ def mix_images(image1, image2, channel1, channel2):
 
     out = None
     ### YOUR CODE HERE
-    pass
+    dim1 = image1.shape[1]
+    left = rgb_exclusion(image1[:, :dim1 // 2, :], channel1)
+    right = rgb_exclusion(image2[:, dim1 // 2:, :], channel2)
+    out = np.concatenate((left, right), axis=1)
     ### END YOUR CODE
 
     return out
@@ -183,7 +187,14 @@ def mix_quadrants(image):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    dim0, dim1 = image.shape[:2]
+    top_left = rgb_exclusion(image[:dim0 // 2, :dim1 // 2, :], 'R')
+    top_right = dim_image(image[:dim0 // 2, dim1 // 2:, :])
+    bottom_left = image[dim0 // 2:, :dim1 // 2, :] ** 0.5
+    bottom_right = rgb_exclusion(image[dim0 // 2:, dim1 // 2:, :], 'R')
+    left = np.concatenate((top_left, bottom_left))
+    right = np.concatenate((top_right, bottom_right))
+    out = np.concatenate((left, right), axis=1)
     ### END YOUR CODE
 
     return out
