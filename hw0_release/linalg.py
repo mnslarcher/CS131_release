@@ -16,7 +16,7 @@ def dot_product(a, b):
     """
     out = None
     ### YOUR CODE HERE
-    pass
+    out = np.dot(a, b)
     ### END YOUR CODE
     return out
 
@@ -37,7 +37,11 @@ def complicated_matrix_function(M, a, b):
     """
     out = None
     ### YOUR CODE HERE
-    pass
+    squeezed_a = np.squeeze(a)
+    squeezed_b = np.squeeze(b)
+    out = np.dot(np.dot(squeezed_a.T, squeezed_b),
+        np.dot(M, squeezed_a.T))[:, np.newaxis]
+
     ### END YOUR CODE
 
     return out
