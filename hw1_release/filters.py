@@ -29,7 +29,14 @@ def conv_nested(image, kernel):
     out = np.zeros((Hi, Wi))
 
     ### YOUR CODE HERE
-    pass
+    for m in range(Hi):
+        for n in range(Wi):
+            for i in range(max(0, m + (Hk // 2) + 1 - Hi),
+                    min(Hk, m + (Hk // 2) + 1)):
+                for j in range(max(0, n + (Wk // 2) + 1 - Wi),
+                        min(Wk, n + (Hk // 2) + 1)):
+                    out[m, n] += kernel[i, j] * image[m - i + (Hk // 2),
+                        n - j + (Wk // 2)]
     ### END YOUR CODE
 
     return out
@@ -56,7 +63,8 @@ def zero_pad(image, pad_height, pad_width):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out = np.zeros((H + 2 * pad_height, W + 2 * pad_width))
+    out[pad_height:-pad_height, pad_width:-pad_width] = image
     ### END YOUR CODE
     return out
 
@@ -85,7 +93,11 @@ def conv_fast(image, kernel):
     out = np.zeros((Hi, Wi))
 
     ### YOUR CODE HERE
-    pass
+    kernel = np.flip(kernel, axis=(0, 1))
+    image = zero_pad(image, Hk // 2, Wk // 2)
+    for m in range(Hi):
+        for n in range(Wi):
+            out[m, n] = np.sum(kernel * image[m:m + Hk, n:n + Wk])
     ### END YOUR CODE
 
     return out
@@ -104,7 +116,10 @@ def conv_faster(image, kernel):
     out = np.zeros((Hi, Wi))
 
     ### YOUR CODE HERE
-    pass
+    kernel = kernel[::-1, ::-1]
+    image = zero_pad(image, Hk // 2, Wk // 2)
+    out = np.array([np.sum(kernel * image[m:m + Hk, n:n + Wk])
+        for m in range(Hi) for n in range(Wi)]).reshape((Hi, Wi))
     ### END YOUR CODE
 
     return out
@@ -124,7 +139,7 @@ def cross_correlation(f, g):
 
     out = None
     ### YOUR CODE HERE
-    pass
+    out = conv_fast(f, g[::-1, ::-1])
     ### END YOUR CODE
 
     return out
@@ -146,7 +161,7 @@ def zero_mean_cross_correlation(f, g):
 
     out = None
     ### YOUR CODE HERE
-    pass
+    out = cross_correlation(f, g - g.mean())
     ### END YOUR CODE
 
     return out
@@ -157,7 +172,7 @@ def normalized_cross_correlation(f, g):
     Normalize the subimage of f and the template g at each step
     before computing the weighted sum of the two.
 
-    Hint: you should look up useful numpy functions online for calculating 
+    Hint: you should look up useful numpy functions online for calculating
           the mean and standard deviation.
 
     Args:
@@ -170,7 +185,13 @@ def normalized_cross_correlation(f, g):
 
     out = None
     ### YOUR CODE HERE
-    pass
+    Hi, Wi = f.shape
+    Hk, Wk = g.shape
+    f = zero_pad(f, Hk // 2, Wk // 2)
+    g = (g - g.mean()) / g.std()
+    out = np.array([np.sum(g * (f[m:m + Hk, n:n + Wk] -
+        f[m:m + Hk, n:n + Wk].mean()) / f[m:m + Hk, n:n + Wk].std())
+        for m in range(Hi) for n in range(Wi)]).reshape((Hi, Wi))
     ### END YOUR CODE
 
     return out
