@@ -30,7 +30,8 @@ def energy_function(image):
     gray_image = color.rgb2gray(image)
 
     ### YOUR CODE HERE
-    pass
+    Gx, Gy = np.gradient(gray_image)
+    out = np.abs(Gx) + np.abs(Gy)
     ### END YOUR CODE
 
     return out
@@ -77,7 +78,17 @@ def compute_cost(image, energy, axis=1):
     paths[0] = 0  # we don't care about the first row of paths
 
     ### YOUR CODE HERE
-    pass
+    cost = np.pad(cost, [(0, 0), (1, 1)], 'constant', constant_values=float('inf'))
+
+    for i in range(1, H):
+        costs = np.array([cost[i - 1, :-2], 
+                          cost[i - 1, 1:-1],
+                          cost[i - 1, 2:]])
+        paths[i] = np.argmin(costs, axis=0)
+        cost[i, 1:-1] =  energy[i] + costs[paths[i], range(W)]
+        paths[i] -= 1
+
+    cost = cost[:, 1:-1]
     ### END YOUR CODE
 
     if axis == 0:
@@ -115,7 +126,8 @@ def backtrack_seam(paths, end):
     seam[H-1] = end
 
     ### YOUR CODE HERE
-    pass
+    for i in range(1, H):
+        seam[H - 1 - i] = seam[H - i] + paths[H - i, seam[H - i]]
     ### END YOUR CODE
 
     # Check that seam only contains values in [0, W-1]
@@ -145,7 +157,10 @@ def remove_seam(image, seam):
     out = None
     H, W, C = image.shape
     ### YOUR CODE HERE
-    pass
+    out = np.zeros((H, W - 1, C))
+    for i in range(H):
+        out[i, :seam[i]] = image[i, :seam[i]]
+        out[i, seam[i]:] = image[i, seam[i] + 1:]
     ### END YOUR CODE
     out = np.squeeze(out)  # remove last dimension if C == 1
 
@@ -190,7 +205,12 @@ def reduce(image, size, axis=1, efunc=energy_function, cfunc=compute_cost):
     assert size > 0, "Size must be greater than zero"
 
     ### YOUR CODE HERE
-    pass
+    for _ in range(W - size):
+        energy = efunc(out)
+        cost, paths = cfunc(out, energy)
+        end = np.argmin(cost[-1])
+        seam = backtrack_seam(paths, end)
+        out = remove_seam(out, seam)
     ### END YOUR CODE
 
     assert out.shape[1] == size, "Output doesn't have the right shape"
