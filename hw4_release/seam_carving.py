@@ -454,7 +454,20 @@ def compute_forward_cost(image, energy):
     paths[0] = 0  # we don't care about the first row of paths
 
     ### YOUR CODE HERE
-    pass
+    cost = np.pad(cost, [(0, 0), (1, 1)], 'constant', constant_values=float('inf'))
+
+    for i in range(1, H):
+        costs = np.array([
+            cost[i - 1, :-2] + np.hstack([0, np.abs(image[i - 1, 1:] - image[i, :-1])]) + np.hstack([0, np.abs(image[i, 2:] - image[i, :-2]), 0]), 
+            cost[i - 1, 1:-1] + np.hstack([0, np.abs(image[i, 2:] - image[i, :-2]), 0]),
+            cost[i - 1, 2:] + np.hstack([np.abs(image[i - 1, :-1] - image[i, 1:]), 0]) + np.hstack([0, np.abs(image[i, 2:] - image[i, :-2]), 0])])
+
+        paths[i] = np.argmin(costs, axis=0)
+        cost[i, 1:-1] =  energy[i] + costs[paths[i], range(W)]
+
+        paths[i] -= 1
+
+    cost = cost[:, 1:-1]
     ### END YOUR CODE
 
     # Check that paths only contains -1, 0 or 1
@@ -524,7 +537,22 @@ def remove_object(image, mask):
     out = np.copy(image)
 
     ### YOUR CODE HERE
-    pass
+    def efunc_reduce(image):
+        energy = energy_function(image)
+        energy[mask] = -energy.sum()
+        return energy
+    
+    n = mask.sum(axis=1).max()
+
+    for _ in range(n):
+        energy = efunc_reduce(out)
+        cost, paths = compute_cost(out, energy)
+        end = np.argmin(cost[-1])
+        seam = backtrack_seam(paths, end)
+        mask = remove_seam(mask, seam)
+        out = remove_seam(out, seam)
+        
+    out = enlarge(out, W, axis=1, efunc=energy_function, cfunc=compute_cost)
     ### END YOUR CODE
 
     assert out.shape == image.shape
