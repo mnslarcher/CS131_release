@@ -157,7 +157,7 @@ def remove_seam(image, seam):
     out = None
     H, W, C = image.shape
     ### YOUR CODE HERE
-    out = np.zeros((H, W - 1, C))
+    out = np.zeros((H, W - 1, C), dtype=image.dtype)
     for i in range(H):
         out[i, :seam[i]] = image[i, :seam[i]]
         out[i, seam[i]:] = image[i, seam[i] + 1:]
@@ -237,7 +237,8 @@ def duplicate_seam(image, seam):
     H, W, C = image.shape
     out = np.zeros((H, W + 1, C))
     ### YOUR CODE HERE
-    pass
+    for i in range(H):
+        out[[i], :, :] = np.hstack([image[[i], :seam[i] + 1, :], image[[i], seam[i]:, :]])
     ### END YOUR CODE
 
     return out
@@ -275,7 +276,12 @@ def enlarge_naive(image, size, axis=1, efunc=energy_function, cfunc=compute_cost
     assert size > W, "size must be greather than %d" % W
 
     ### YOUR CODE HERE
-    pass
+    for _ in range(size - W):
+        energy = efunc(out)
+        cost, paths = cfunc(out, energy)
+        end = np.argmin(cost[-1])
+        seam = backtrack_seam(paths, end)
+        out = duplicate_seam(out, seam)
     ### END YOUR CODE
 
     if axis == 0:
@@ -393,7 +399,20 @@ def enlarge(image, size, axis=1, efunc=energy_function, cfunc=compute_cost):
     assert size <= 2 * W, "size must be smaller than %d" % (2 * W)
 
     ### YOUR CODE HERE
-    pass
+    k = size - W
+    seams = find_seams(out, k, axis=1, efunc=energy_function, cfunc=compute_cost)
+    temp = np.zeros((H, size, C))
+
+    for i in range(H):
+        delta_i = 0
+        for j in range(W):
+            temp[i, j + delta_i, :] = out[i, j, :]
+
+            if seams[i, j]:
+                delta_i += 1
+                temp[i, j + delta_i, :] = out[i, j, :]
+
+    out = temp
     ### END YOUR CODE
 
     if axis == 0:
