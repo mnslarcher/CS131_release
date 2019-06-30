@@ -11,6 +11,8 @@ import numpy as np
 import random
 from scipy.spatial.distance import squareform, pdist
 from skimage.util import img_as_float
+from skimage.filters import sobel
+from skimage.color import rgb2gray
 
 ### Clustering Methods
 def kmeans(features, k, num_iters=100):
@@ -45,7 +47,18 @@ def kmeans(features, k, num_iters=100):
 
     for n in range(num_iters):
         ### YOUR CODE HERE
-        pass
+        new_assignments = np.zeros(N)
+
+        for i in range(N):
+            new_assignments[i] = np.argmin(np.linalg.norm(features[i] - centers, axis=1))
+
+        if (assignments == new_assignments).all():
+            return assignments
+        else:
+            assignments = new_assignments
+
+        for j in range(k):
+            centers[j] = features[assignments == j].mean(axis=0)
         ### END YOUR CODE
 
     return assignments
@@ -81,7 +94,16 @@ def kmeans_fast(features, k, num_iters=100):
 
     for n in range(num_iters):
         ### YOUR CODE HERE
-        pass
+        new_assignments = np.argmin(np.linalg.norm(np.repeat(features, k, 
+            axis=0).reshape(N, k, D) - centers, axis=2), axis=1)
+
+        if (assignments == new_assignments).all():
+            return assignments
+        else:
+            assignments = new_assignments
+
+        for j in range(k):
+            centers[j] = features[assignments == j].mean(axis=0)
         ### END YOUR CODE
 
     return assignments
@@ -133,7 +155,14 @@ def hierarchical_clustering(features, k):
 
     while n_clusters > k:
         ### YOUR CODE HERE
-        pass
+        distances = squareform(pdist(centers))
+        np.fill_diagonal(distances, np.inf)
+        i, j = np.unravel_index(np.argmin(distances, axis=None), distances.shape)
+        assignments[assignments == j] = i
+        assignments[assignments > j] -= 1
+        centers = np.vstack([centers[:j], centers[j + 1:]])
+        centers[i] = features[assignments == i].mean(axis=0)
+        n_clusters -= 1
         ### END YOUR CODE
 
     return assignments
@@ -154,7 +183,7 @@ def color_features(img):
     features = np.zeros((H*W, C))
 
     ### YOUR CODE HERE
-    pass
+    features = img.reshape(H * W, C)
     ### END YOUR CODE
 
     return features
@@ -183,7 +212,12 @@ def color_position_features(img):
     features = np.zeros((H*W, C+2))
 
     ### YOUR CODE HERE
-    pass
+    features[:, :-2] = color_features(img)
+    x, y = np.mgrid[:H, :W]
+    features[:, -2] = x.flatten()
+    features[:, -1] = y.flatten()
+    features -= features.mean(axis=0)
+    features /= features.std(axis=0)
     ### END YOUR CODE
 
     return features
@@ -199,7 +233,14 @@ def my_features(img):
     """
     features = None
     ### YOUR CODE HERE
-    pass
+    H, W, C = img.shape
+    features = np.zeros((H * W, C + 1))
+    features[:, :-1] = color_features(img)
+    x, y = np.mgrid[:H, :W]
+    features[:, -1] = sobel(rgb2gray(img)).flatten()
+    features -= features.mean(axis=0)
+    features /= features.std(axis=0)
+    features[-1] /= 2
     ### END YOUR CODE
     return features
 
@@ -223,7 +264,7 @@ def compute_accuracy(mask_gt, mask):
 
     accuracy = None
     ### YOUR CODE HERE
-    pass
+    accuracy = (mask_gt == mask).mean()
     ### END YOUR CODE
 
     return accuracy
