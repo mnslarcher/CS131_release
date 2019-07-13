@@ -26,8 +26,7 @@ def compute_distances(X1, X2):
     # in particular you should not use functions from scipy.
     #
     # HINT: Try to formulate the l2 distance using matrix multiplication
-
-    pass
+    dists = np.sqrt(((np.expand_dims(X1, axis=1) - X2) ** 2).sum(axis=2))
     # END YOUR CODE
 
     assert dists.shape == (M, N), "dists should have shape (M, N), got %s" % dists.shape
@@ -65,7 +64,8 @@ def predict_labels(dists, y_train, k=1):
         # label.
 
         # YOUR CODE HERE
-        pass
+        closest_y = y_train[np.argsort(dists[i])[:k]]
+        y_pred[i] = np.bincount(closest_y).argmax()
         # END YOUR CODE
 
     return y_pred
@@ -111,7 +111,12 @@ def split_folds(X_train, y_train, num_folds):
 
     # YOUR CODE HERE
     # Hint: You can use the numpy array_split function.
-    pass
+    N = len(X_train)
+    train_idx = np.arange(len(X_train))
+    for i in range(num_folds):
+        folds_idx = np.array_split(np.roll(train_idx, -(i + 1) * (N // num_folds), axis=0), num_folds)
+        X_trains[i, :, :], X_vals[i, :, :] = X_train[np.concatenate(folds_idx[:-1])], X_train[folds_idx[-1]]
+        y_trains[i, :], y_vals[i, :] = y_train[np.concatenate(folds_idx[:-1])], y_train[folds_idx[-1]]
     # END YOUR CODE
 
     return X_trains, y_trains, X_vals, y_vals

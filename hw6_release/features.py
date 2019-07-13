@@ -42,7 +42,14 @@ class PCA(object):
         # YOUR CODE HERE
         # 1. Compute the mean and store it in self.mean
         # 2. Apply either method to `X_centered`
-        pass
+        self.mean = X.mean(axis=0)
+        X_centered = X - self.mean
+        if method == 'svd':
+            self.W_pca, _ = self._svd(X_centered)
+        elif method == 'eigen':
+            self.W_pca, _ = self._eigen_decomp(X_centered)
+        else:
+            raise ValueError("'{}' is not a valid value for 'method'".format(method))
         # END YOUR CODE
 
         # Make sure that X_centered has mean zero
@@ -80,7 +87,10 @@ class PCA(object):
         #     1. compute the covariance matrix of X, of shape (D, D)
         #     2. compute the eigenvalues and eigenvectors of the covariance matrix
         #     3. Sort both of them in decreasing order (ex: 1.0 > 0.5 > 0.0 > -0.2 > -1.2)
-        pass
+        S = np.dot(X.T, X) / (N - 1)
+        e_vals, e_vecs = np.linalg.eigh(S)
+        e_vals = e_vals[::-1]
+        e_vecs = e_vecs[:, ::-1]
         # END YOUR CODE
 
         # Check the output shapes
@@ -105,7 +115,8 @@ class PCA(object):
         # YOUR CODE HERE
         # Here, compute the SVD of X
         # Make sure to return vecs as the matrix of vectors where each column is a singular vector
-        pass
+        _, vals, vecs = np.linalg.svd(X)
+        vecs = vecs.T
         # END YOUR CODE
         assert vecs.shape == (D, D)
         K = min(N, D)
@@ -129,7 +140,9 @@ class PCA(object):
         # We need to modify X in two steps:
         #     1. first substract the mean stored during `fit`
         #     2. then project onto a subspace of dimension `n_components` using `self.W_pca`
-        pass
+        X_proj = X.copy()
+        X_proj -= self.mean
+        X_proj = np.dot(X_proj, self.W_pca[:, :n_components])
         # END YOUR CODE
 
         assert X_proj.shape == (N, n_components), "X_proj doesn't have the right shape"
@@ -155,7 +168,8 @@ class PCA(object):
         # Steps:
         #     1. project back onto the original space of dimension D
         #     2. add the mean that we substracted in `transform`
-        pass
+        X = np.dot(X_proj, self.W_pca[:, :n_components].T)
+        X += self.mean
         # END YOUR CODE
 
         return X
@@ -194,7 +208,8 @@ class LDA(object):
         # Solve generalized eigenvalue problem for matrices `scatter_between` and `scatter_within`
         # Use `scipy.linalg.eig` instead of numpy's eigenvalue solver.
         # Don't forget to sort the values and vectors in descending order.
-        pass
+        e_vals, e_vecs = scipy.linalg.eig(scatter_between, scatter_within)
+        e_vecs = e_vecs[:, np.argsort(-e_vals)]
         # END YOUR CODE
 
         self.W_lda = e_vecs
@@ -231,7 +246,10 @@ class LDA(object):
         for i in np.unique(y):
             # YOUR CODE HERE
             # Get the covariance matrix for class i, and add it to scatter_within
-            pass
+            Xi = X[y == i]
+            mui = Xi.mean(axis=0)
+            Xi_centered = Xi - mui
+            scatter_within += np.dot(Xi_centered.T, Xi_centered)
             # END YOUR CODE
 
         return scatter_within
@@ -257,7 +275,9 @@ class LDA(object):
         mu = X.mean(axis=0)
         for i in np.unique(y):
             # YOUR CODE HERE
-            pass
+            Ni = (y == i).sum()
+            mui_centered = (X[y == i].mean(axis=0) - mu)[:, None]
+            scatter_between += Ni * np.dot(mui_centered, mui_centered.T)
             # END YOUR CODE
 
         return scatter_between
@@ -276,7 +296,7 @@ class LDA(object):
         X_proj = None
         # YOUR CODE HERE
         # project onto a subspace of dimension `n_components` using `self.W_lda`
-        pass
+        X_proj = np.dot(X, self.W_lda[:, :n_components])
         # END YOUR CODE
 
         assert X_proj.shape == (N, n_components), "X_proj doesn't have the right shape"

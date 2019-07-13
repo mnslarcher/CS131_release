@@ -8,7 +8,7 @@ from skimage import io
 from skimage import img_as_float
 
 
-def load_dataset(data_dir, train=True, as_grey=False, shuffle=True, seed=131):
+def load_dataset(data_dir, train=True, as_gray=False, shuffle=True, seed=131):
     """ Load faces dataset
 
     The face dataset for CS131 assignment.
@@ -25,7 +25,7 @@ def load_dataset(data_dir, train=True, as_grey=False, shuffle=True, seed=131):
     Args:
         data_dir: Directory containing the face datset.
         train: If True, load training data. Load test data otherwise.
-        as_grey: If True, open images as grayscale.
+        as_gray: If True, open images as grayscale.
         shuffle: shuffle dataset
         seed: use this random seed to shuffle the dataset
 
@@ -46,7 +46,7 @@ def load_dataset(data_dir, train=True, as_grey=False, shuffle=True, seed=131):
     for i, cls in enumerate(sorted(os.listdir(data_dir))):
         for img_file in sorted(os.listdir(os.path.join(data_dir, cls))):
             img_path = os.path.join(data_dir, cls, img_file)
-            img = img_as_float(io.imread(img_path, as_grey=as_grey))
+            img = img_as_float(io.imread(img_path, as_gray=as_gray))
             X.append(img)
             y.append(i)
         class_names.append(cls)
