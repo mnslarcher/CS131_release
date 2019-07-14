@@ -136,7 +136,9 @@ def pyramid_score(image,base_score, shape, stepSize=20, scale = 0.9, pixel_per_c
     images = pyramid(image, scale)
     ### YOUR CODE HERE
     for current_scale, rescaled_image in images:
-        current_score, current_maxr, current_maxc, response_map = sliding_window(rescaled_image, base_score, stepSize, shape, pixel_per_cell=8)
+        current_score, current_maxr, current_maxc, response_map = sliding_window(
+            rescaled_image, base_score, stepSize, shape, 
+            pixel_per_cell=pixel_per_cell)
         
         if current_score > max_score:
             max_score = current_score
@@ -169,7 +171,10 @@ def compute_displacement(part_centers, face_shape):
     """
     d = np.zeros((part_centers.shape[0],2))
     ### YOUR CODE HERE
-    pass
+    face_center = np.array([face_shape[0] / 2, face_shape[1] / 2])
+    d = face_center - part_centers
+    mu = d.mean(axis=0).astype(int)
+    sigma = d.std(axis=0)
     ### END YOUR CODE
     return mu, sigma
 
@@ -187,7 +192,9 @@ def shift_heatmap(heatmap, mu):
             new_heatmap: np array of (h,w).
     """
     ### YOUR CODE HERE
-    pass
+    new_heatmap = heatmap.copy()
+    new_heatmap[new_heatmap > 1] = 1
+    new_heatmap = interpolation.shift(heatmap, mu)
     ### END YOUR CODE
     return new_heatmap
 
@@ -207,7 +214,13 @@ def gaussian_heatmap(heatmap_face, heatmaps, sigmas):
         new_image: an image np array of (h,w) after gaussian convoluted.
     """
     ### YOUR CODE HERE
-    pass
+    heatmap = heatmap_face.copy()
+    for hm, sig in zip(heatmaps, sigmas):
+        heatmap += gaussian(hm, sig)
+
+    argmax = np.argmax(heatmap)
+    r = argmax // heatmap.shape[0]
+    c = argmax % heatmap.shape[0]
     ### END YOUR CODE
     return heatmap, r , c
 

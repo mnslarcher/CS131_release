@@ -1,4 +1,5 @@
 .ipynb_checkpoints
 *.tar.gz
 *.jpg
+*.pdf
 __pycache__
