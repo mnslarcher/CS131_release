@@ -21,7 +21,11 @@ def hog_feature(image, pixel_per_cell = 8):
         hogImage: an image representation of hog provided by skimage.
     """
     ### YOUR CODE HERE
-    pass
+    hogFeature, hogImage = feature.hog(
+        image, 
+        pixels_per_cell=(pixel_per_cell, pixel_per_cell), 
+        visualise=True
+    )
     ### END YOUR CODE
     return (hogFeature, hogImage)
 
@@ -53,7 +57,20 @@ def sliding_window(image, base_score, stepSize, windowSize, pixel_per_cell=8):
     pad_image = np.lib.pad(image, ((winH//2,winH-winH//2),(winW//2, winW-winW//2)), mode='constant')
     response_map = np.zeros((H//stepSize+1, W//stepSize+1))
     ### YOUR CODE HERE
-    pass
+    for i in range(0, H, stepSize):
+        for j in range(0, W, stepSize):
+            window = pad_image[i:i + winH, j:j + winW].copy()
+            hogFeature = feature.hog(window, pixels_per_cell=(pixel_per_cell, pixel_per_cell))
+            response = np.dot(base_score, hogFeature)
+
+            if response > max_score:
+                max_score = response
+                maxr = max(0, i - winH // 2)
+                maxc = max(0, j - winW // 2)
+
+            response_map[i // stepSize, j // stepSize] = response
+
+    response_map = resize(response_map, image.shape)
     ### END YOUR CODE
 
 
@@ -84,7 +101,14 @@ def pyramid(image, scale=0.9, minSize=(200, 100)):
     images.append((current_scale, image))
     # keep looping over the pyramid
     ### YOUR CODE HERE
-    pass
+    cond = True
+    while cond:
+        current_scale *= scale
+        rescaled_image = rescale(image, scale=current_scale)
+        if (rescaled_image.shape[0] <= minSize[0]) or (rescaled_image.shape[1] <= minSize[1]):
+            cond = False
+        else:
+            images.append((current_scale, rescaled_image))
     ### END YOUR CODE
     return images
 
@@ -111,7 +135,15 @@ def pyramid_score(image,base_score, shape, stepSize=20, scale = 0.9, pixel_per_c
     max_response_map =np.zeros(image.shape)
     images = pyramid(image, scale)
     ### YOUR CODE HERE
-    pass
+    for current_scale, rescaled_image in images:
+        current_score, current_maxr, current_maxc, response_map = sliding_window(rescaled_image, base_score, stepSize, shape, pixel_per_cell=8)
+        
+        if current_score > max_score:
+            max_score = current_score
+            max_response_map = response_map
+            maxr = current_maxr
+            maxc = current_maxc
+            max_scale = current_scale
     ### END YOUR CODE
     return max_score, maxr, maxc, max_scale, max_response_map
 
